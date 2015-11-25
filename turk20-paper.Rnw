@@ -74,7 +74,7 @@
   \bigskip
   \bigskip
   \begin{center}
-    {\LARGE\bf Results from the Turk 20 Study}
+    {\LARGE\bf Results from Turk Studies 16 and 19}
 \end{center}
   \medskip
 } \fi
@@ -100,9 +100,126 @@ require(knitr)
 opts_chunk$set(fig.path='figure/', cache.path='cache/', fig.align='center', fig.width=5, fig.height=5, par=TRUE, cache=TRUE, concordance=TRUE, autodep=TRUE, message=F, warning=F)
 
 library(dplyr)
+library(ggplot2)
+library(gridExtra)
+source("code/theme_lineup.R")
 @
 
 \section{Motivation and Background} 
+Motivation: in a previous study we noticed that an imbalance in the  size of clusters made participants -depending on the set of aesthetics used- change their target.
+
+\section{Overview of all plots involved}
+
+<<picdetails, echo=FALSE>>=
+pics19 <- read.csv("data/picture-details-turk19.csv", stringsAsFactors = FALSE)
+t16s <- grep("-turk16", pics19$test_param)
+pics19 <- pics19[t16s,]
+
+pics16 <- read.csv("data/picture-details-turk16.csv", stringsAsFactors = FALSE)
+pics16$pic_id <- 1:nrow(pics16)
+
+d19 <- file.path("data/lineup-data/turk19", dir("data/lineup-data/turk19"))
+d16 <- file.path("data/lineup-data/turk16", dir("data/lineup-data/turk16"))
+
+parseName <- function(data_name) {
+  set <- as.numeric(gsub("set-([0-9]+)-.*", "\\1", data_name))
+  k <- as.numeric(gsub(".*-k-([0-9]+)-.*", "\\1", data_name))
+  sdtrend <- as.numeric(gsub(".*-sd.?(line|trend)-(0.[0-9]+)-.*", "\\2", data_name))
+  sdgroup <- as.numeric(gsub(".*-sd.?group-(0.[0-9]+).*", "\\1", data_name))
+  data.frame(set=set, k=k, sdtrend=sdtrend, sdgroup=sdgroup)
+}
+pics19 <- data.frame(pics19, parseName(pics19$data_name))
+pics16 <- data.frame(pics16, parseName(pics16$data_name))
+
+pics16$test_param <- gsub("turk16-", "", pics16$test_param)
+pics19$test_param <- gsub("turk18-", "", pics19$test_param)
+pics19$test_param <- gsub("-turk16", "", pics19$test_param)
+
+pics <- merge(pics16, pics19, by=c("test_param", "k", "set", "sdtrend", "sdgroup"))
+
+colors <-  c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", 
+             "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf")
+
+shapes <- c(1,0,3,4,8,5,2,6,-0x25C1, -0x25B7)
+
+ks <- list(c(), c(), c(1,4,9), c(), c(3,4,6,7,10))
+ss <- list(c(), c(), c(1,3,7), c(), c(1,2,3,5,8))
+
+turk16 <- read.csv("data/turk16_results.csv", stringsAsFactors = FALSE)
+turk19 <- read.csv("data/turk19_results_anon.csv", stringsAsFactors = FALSE)
+turk16 <- merge(turk16, pics16, by="pic_id")
+turk19 <- merge(turk19, pics19, by="pic_id")
+
+
+getCounts <- function(response) {
+  results <- strsplit(response,split=",")
+  m <- 20
+  wt <- sapply(results, length)
+  wt <- 1/rep(wt, wt)
+  picks <- factor(as.numeric(unlist(results)), levels=1:20)
+
+  counts <- xtabs(wt~picks)
+  as.vector(counts)
+}
+
+res16 <- turk16 %>% group_by(pic_id) %>% summarise(
+  evals = n(),
+  counts = list(getCounts(response_no))
+)
+res19 <- turk19 %>% group_by(pic_id) %>% summarise(
+  evals = n(),
+  counts = list(getCounts(response_no))
+)
+
+@
+
+<<list_of_pics, dependson='picdetails', echo=FALSE, fig.width=6, fig.height=6, out.width='.49\\textwidth'>>=
+list_of_pics16 <- lapply(1:nrow(pics), function(i) {
+  fname <- pics$data_name.x[i]
+  dx <- read.csv(file.path("data/data16", paste0(fname,".csv")))
+  k <- length(unique(dx$group))
+  cols <- colors[ks[[k]]]
+  xmax =max(dx$x)
+  ymin = min(dx$y)
+  qplot(data=dx, x, y, colour = factor(group), size=I(3), facets=~.sample) +
+    scale_colour_manual(values = cols) + theme_lineup() +
+    geom_text(data=subset(res16, pic_id == pics$pic_id.x[i]), 
+              aes(label = round(counts[[1]],2)), x = xmax, y = ymin, size = 5, 
+            colour="grey70", hjust="inward", vjust="inward")
+})
+list_of_pics19 <- lapply(1:nrow(pics), function(i) {
+  fname <- pics$data_name.y[i]
+  dx <- read.csv(file.path("data/data19", paste0(fname,".csv")))
+  k <- length(unique(dx$group))
+  cols <- colors[ks[[k]]]
+  xmax =max(dx$x)
+  ymin = min(dx$y)
+  qplot(data=dx, x, y, colour = factor(group), size=I(3), facets=~.sample) +
+    scale_colour_manual(values = cols) + theme_lineup() +
+    geom_text(data=subset(res19, pic_id == pics$pic_id.y[i]), 
+              aes(label = round(counts[[1]],2)), x = xmax, y = ymin, size = 5, 
+            colour="grey70", hjust="inward", vjust="inward")
+})
+
+@
+
+\begin{figure}
+<<set1, dependson='list_of_pics', echo=FALSE, fig.width=12, fig.height=18, out.width='.9\\textwidth'>>=
+l16 <- list_of_pics16
+l19 <- list_of_pics19
+
+grid.arrange(l16[[1]], l19[[1]], l16[[2]], l19[[2]], l16[[3]], l19[[3]], ncol=2, padding=unit(1, "line"))
+@
+\end{figure}
+
+\begin{figure}
+<<set2, dependson='list_of_pics', echo=FALSE, fig.width=12, fig.height=18, out.width='.9\\textwidth'>>=
+l16 <- list_of_pics16[4:6]
+l19 <- list_of_pics19[4:6]
+
+grid.arrange(l16[[1]], l19[[1]], l16[[2]], l19[[2]], l16[[3]], l19[[3]], ncol=2, padding=unit(1, "line"))
+@
+\end{figure}
 
 
 \bibliographystyle{asa}
