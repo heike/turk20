@@ -103,6 +103,7 @@ library(dplyr)
 library(ggplot2)
 library(gridExtra)
 source("code/theme_lineup.R")
+source("code/generate-lineups.R")
 @
 
 \section{Motivation and Background} 
@@ -181,9 +182,11 @@ list_of_pics16 <- lapply(1:nrow(pics), function(i) {
   cols <- colors[ks[[k]]]
   xmax =max(dx$x)
   ymin = min(dx$y)
-  qplot(data=dx, x, y, colour = factor(group), size=I(3), facets=~.sample) +
-    scale_colour_manual(values = cols) + theme_lineup() +
-    geom_text(data=subset(res16, pic_id == pics$pic_id.x[i]), 
+  params <- subset(pics16, pic_id == pics$pic_id.x[i])
+  type <- params$test_param
+  params <- data.frame(K = k, sd.trend = params$sdtrend, sd.cluster = params$sdgroup, N = 45)
+  p <- generateLineup(dx, type, colorp = colors[ks[[k]]], params = params)
+  p + geom_text(data=subset(res16, pic_id == pics$pic_id.x[i]), 
               aes(label = round(counts[[1]],2)), x = xmax, y = ymin, size = 5, 
             colour="grey70", hjust="inward", vjust="inward")
 })
@@ -194,9 +197,11 @@ list_of_pics19 <- lapply(1:nrow(pics), function(i) {
   cols <- colors[ks[[k]]]
   xmax =max(dx$x)
   ymin = min(dx$y)
-  qplot(data=dx, x, y, colour = factor(group), size=I(3), facets=~.sample) +
-    scale_colour_manual(values = cols) + theme_lineup() +
-    geom_text(data=subset(res19, pic_id == pics$pic_id.y[i]), 
+  params <- subset(pics19, pic_id == pics$pic_id.y[i])
+  type <- params$test_param
+  params <- data.frame(K = k, sd.trend = params$sdtrend, sd.cluster = params$sdgroup, N = 45)
+  p <- generateLineup(dx, type, colorp = colors[ks[[k]]], params = params)
+  p + geom_text(data=subset(res19, pic_id == pics$pic_id.y[i]), 
               aes(label = round(counts[[1]],2)), x = xmax, y = ymin, size = 5, 
             colour="grey70", hjust="inward", vjust="inward")
 })
@@ -221,7 +226,14 @@ grid.arrange(l16[[1]], l19[[1]], l16[[2]], l19[[2]], l16[[3]], l19[[3]], ncol=2,
 @
 \end{figure}
 
+\begin{figure}
+<<set3, dependson='list_of_pics', echo=FALSE, fig.width=12, fig.height=18, out.width='.9\\textwidth'>>=
+l16 <- list_of_pics16[7:9]
+l19 <- list_of_pics19[7:9]
 
+grid.arrange(l16[[1]], l19[[1]], l16[[2]], l19[[2]], l16[[3]], l19[[3]], ncol=2, padding=unit(1, "line"))
+@
+\end{figure}
 \bibliographystyle{asa}
 \bibliography{references}
 
