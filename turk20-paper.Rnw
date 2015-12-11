@@ -94,6 +94,14 @@ Graphics play a crucial role in statistical analysis and data mining. Being able
 \tableofcontents
 \newpage
 
+\hh{List of things to do:
+\begin{enumerate}
+\item match turk 16 and turk 19 properly: DONE
+\item identify minor and major semi axes of ellipses
+\item include discussion of color scheme: * essentially all the same; * but original study was a bit better based on Heer's color scheme + tweaks
+\end{enumerate}
+}
+
 <<setup, echo = FALSE, message = FALSE, warning = FALSE>>=
 options(replace.assign=TRUE,width=70, digits=2)
 require(knitr)
@@ -178,7 +186,7 @@ res19 <- turk19 %>% group_by(pic_id) %>% summarise(
 <<list_of_pics, dependson='picdetails', echo=FALSE, fig.width=6, fig.height=6, out.width='.49\\textwidth'>>=
 list_of_pics16 <- lapply(1:nrow(pics), function(i) {
   fname <- pics$data_name.x[i]
-  dx <- read.csv(file.path(d16, paste0(fname, ".csv")))
+  dx <- read.csv(file.path("data/lineup-data/turk16", paste0(fname,".csv")))
   k <- length(unique(dx$group))
   cols <- colors[ks[[k]]]
   xmax =max(dx$x)
