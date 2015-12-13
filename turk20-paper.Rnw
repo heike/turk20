@@ -200,10 +200,7 @@ list_of_pics16 <- lapply(1:nrow(pics), function(i) {
             colour="grey70", hjust="inward", vjust="inward")
 })
 list_of_pics19 <- lapply(1:nrow(pics), function(i) {
-  fname <- pics$data_name.y[i] %>%
-    str_replace("sd.trend", "sdline") %>%
-    str_replace("sd.group", "sdgroup") %>%
-    str_replace("-turk16", "")
+  fname <- pics$data_name.y[i] 
   dx <- read.csv(file.path(d19, paste0(fname, ".csv")))
   k <- length(unique(dx$group))
   cols <- colors[ks[[k]]]
@@ -241,6 +238,15 @@ grid.arrange(l16[[1]], l19[[1]], l16[[2]], l19[[2]], l16[[3]], l19[[3]], ncol=2,
 <<set3, dependson='list_of_pics', echo=FALSE, fig.width=12, fig.height=18, out.width='.9\\textwidth'>>=
 l16 <- list_of_pics16[7:9]
 l19 <- list_of_pics19[7:9]
+
+grid.arrange(l16[[1]], l19[[1]], l16[[2]], l19[[2]], l16[[3]], l19[[3]], ncol=2, padding=unit(1, "line"))
+@
+\end{figure}
+
+\begin{figure}
+<<set4, dependson='list_of_pics', echo=FALSE, fig.width=12, fig.height=18, out.width='.9\\textwidth'>>=
+l16 <- list_of_pics16[10:12]
+l19 <- list_of_pics19[10:12]
 
 grid.arrange(l16[[1]], l19[[1]], l16[[2]], l19[[2]], l16[[3]], l19[[3]], ncol=2, padding=unit(1, "line"))
 @
