@@ -204,13 +204,7 @@ res19 <- turk19 %>% group_by(pic_id) %>% summarise(
 
 @
 
-<<getellipses, echo=FALSE>>=
-dframe <- subset(pics, data_name.y=="set-16-k-5-sd.trend-0.45-sd.group-0.20-turk16")
-
-dy <- read.csv(file.path("data/lineup-data/turk19", paste0(dframe$data_name.y[1],".csv")))
-ell19 <- dy %>% group_by(.sample, group) %>% 
-    do(data.frame(calculate_ellipse_axes(data=., vars = c("x", "y"))))
-
+<<getellipses, echo=FALSE, warning=FALSE>>=
 
 ellipses <- lapply(1:nrow(pics), function(i) {
   fname <- pics$data_name.x[i]
@@ -218,15 +212,31 @@ ellipses <- lapply(1:nrow(pics), function(i) {
   ell16 <- dx %>% group_by(.sample, group) %>% 
     do(data.frame(calculate_ellipse_axes(data=., vars = c("x", "y"))))
   names(ell16)[3:4] <- c("minor.16", "major.16")
+  ell16$area.16 <- with(ell16, pi*minor.16*major.16)
   
   fname <- pics$data_name.y[i]
   dy <- read.csv(file.path("data/lineup-data/turk19", paste0(fname,".csv")))
   ell19 <- dy %>% group_by(.sample, group) %>% 
     do(data.frame(calculate_ellipse_axes(data=., vars = c("x", "y"))))
   names(ell19)[3:4] <- c("minor.19", "major.19")
+  ell19$area.19 <- with(ell19, pi*minor.19*major.19)
   
   merge(ell16, ell19, by=c(".sample", "group"))
-}) 
+})
+
+ellipses.stats <- lapply(1:nrow(pics), function(i) {
+  dframe <- ellipses[[i]]
+  dframe %>% group_by(.sample) %>% summarise(
+    minor.16=max(minor.16),
+    major.16=max(major.16),
+    area.16=max(area.16),
+    minor.19=max(minor.19),
+    major.19=max(major.19),
+    area.19=max(area.19)
+  )
+})
+
+
 @
 
 
