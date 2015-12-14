@@ -113,6 +113,27 @@ library(gridExtra)
 library(stringr)
 source("code/theme_lineup.R")
 source("code/generate-lineups.R")
+
+calculate_ellipse_axes <- function(data, vars) {
+  dfn <- 2
+  dfd <- nrow(data) - 1
+
+  if (dfd < 3) {
+    message("Too few points to calculate an ellipse")
+    axes <- as.numeric(c(NA, NA))
+  } else {
+    v <- MASS::cov.trob(data[,vars])
+    shape <- v$cov
+    chol_decomp <- chol(shape)
+    radius <- sqrt(dfn * stats::qf(0.95, dfn, dfd))
+    unit.circle <- diag(c(1,1))
+    ellipse <- t(radius * t(unit.circle %*% chol_decomp))
+    axes <- sort(diag(ellipse))
+  }
+  names(axes) <- c("minor", "major")
+  data.frame(rbind(axes))
+}
+
 @
 
 \section{Motivation and Background}
@@ -182,6 +203,32 @@ res19 <- turk19 %>% group_by(pic_id) %>% summarise(
 )
 
 @
+
+<<getellipses, echo=FALSE>>=
+dframe <- subset(pics, data_name.y=="set-16-k-5-sd.trend-0.45-sd.group-0.20-turk16")
+
+dy <- read.csv(file.path("data/lineup-data/turk19", paste0(dframe$data_name.y[1],".csv")))
+ell19 <- dy %>% group_by(.sample, group) %>% 
+    do(data.frame(calculate_ellipse_axes(data=., vars = c("x", "y"))))
+
+
+ellipses <- lapply(1:nrow(pics), function(i) {
+  fname <- pics$data_name.x[i]
+  dx <- read.csv(file.path("data/lineup-data/turk16", paste0(fname,".csv")))
+  ell16 <- dx %>% group_by(.sample, group) %>% 
+    do(data.frame(calculate_ellipse_axes(data=., vars = c("x", "y"))))
+  names(ell16)[3:4] <- c("minor.16", "major.16")
+  
+  fname <- pics$data_name.y[i]
+  dy <- read.csv(file.path("data/lineup-data/turk19", paste0(fname,".csv")))
+  ell19 <- dy %>% group_by(.sample, group) %>% 
+    do(data.frame(calculate_ellipse_axes(data=., vars = c("x", "y"))))
+  names(ell19)[3:4] <- c("minor.19", "major.19")
+  
+  merge(ell16, ell19, by=c(".sample", "group"))
+}) 
+@
+
 
 <<list_of_pics, dependson='picdetails', echo=FALSE, fig.width=6, fig.height=6, out.width='.49\\textwidth'>>=
 list_of_pics16 <- lapply(1:nrow(pics), function(i) {
