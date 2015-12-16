@@ -226,7 +226,7 @@ ellipses <- lapply(1:nrow(pics), function(i) {
 
 ellipses.stats <- lapply(1:nrow(pics), function(i) {
   dframe <- ellipses[[i]]
-  dframe %>% group_by(.sample) %>% summarise(
+  stats <- dframe %>% group_by(.sample) %>% summarise(
     minor.16=max(minor.16),
     major.16=max(major.16),
     area.16=max(area.16),
@@ -234,9 +234,10 @@ ellipses.stats <- lapply(1:nrow(pics), function(i) {
     major.19=max(major.19),
     area.19=max(area.19)
   )
+  data.frame(stats, pics[i,c("pic_id.x", "pic_id.y")])
 })
 
-
+ellipses.stats <- plyr::ldply(ellipses.stats, function(x) x)
 @
 
 
