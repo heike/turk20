@@ -97,8 +97,10 @@ Graphics play a crucial role in statistical analysis and data mining. Being able
 \hh{List of things to do:
 \begin{enumerate}
 \item match turk 16 and turk 19 properly: DONE
-\item identify minor and major semi axes of ellipses
-\item include discussion of color scheme: * essentially all the same; * but original study was a bit better based on Heer's color scheme + tweaks
+\item identify minor and major semi axes of ellipses: DONE
+\item merge relevant study results in one frame
+\item merge minor and major axes with study results
+\item include discussion of color scheme: idea: essentially all color schemes give the same result, but the original study gave a bit better performance based on Heer's color scheme with additional tweaks
 \end{enumerate}
 }
 
@@ -237,7 +239,7 @@ ellipses.stats <- lapply(1:nrow(pics), function(i) {
   data.frame(stats, pics[i,c("pic_id.x", "pic_id.y")])
 })
 
-ellipses.stats <- plyr::ldply(ellipses.stats, function(x) x)
+ellipses.stats <- ellipses.stats %>% bind_rows()
 @
 
 
